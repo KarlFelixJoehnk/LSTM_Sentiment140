@@ -28,12 +28,13 @@ def create_featuresets(df):
 
 	return featureset
 
-def create_train_test_set(fs):
+def create_feature_lists(fs):
 	X = []
 	y = []
 
 	for feat in fs:
 		#filter out neutral sentiment
+		#actually there is none in this dataset
 		if feat[0] != 2:
 			if feat[0] == 4:
 				X.append(feat[1])
@@ -45,22 +46,26 @@ def create_train_test_set(fs):
 	print("negatives: {}".format(y.count(0)))
 	print("positives: {}".format(y.count(1)))
 	print("neutral: {}".format(y.count(2)))
-
+	
 	for feature in X[:3]:
 		print(feature) 
+	return X, y
 
+def nlp_processing(X):
 	tk = Tokenizer(lower = True)
 	tk.fit_on_texts(X)
 	X_seq = tk.texts_to_sequences(X)
 	for feature in X_seq[:3]:
 		print(feature)
-
 	X_pad = pad_sequences(X_seq, maxlen=25, padding='post')
 	for feature in X_pad[:3]:
 		print(feature)
 	vocabulary_size = len(tk.word_counts.keys())+1
 	print(vocabulary_size)
+	
+	return X_pad
 
+def create_train_test_set(X_pad, y):
 	X_train, X_test, y_train, y_test = train_test_split(X_pad, y, test_size = 0.1, random_state = 1)
 
 	return X_train, X_test, y_train, y_test
@@ -77,13 +82,13 @@ print(df.text_lemmatized.head(5))
 my_featureset = create_featuresets(df)
 #print(my_featureset[:5])
 my_featureset = filer_unnec_words(my_featureset)
-
 random.seed(123)
 random.shuffle(my_featureset)
-
-X_train, X_test, y_train, y_test = create_train_test_set(my_featureset)
+X, y = create_feature_lists(my_featureset)
+X_pad = nlp_processing(X)
+X_train, X_test, y_train, y_test = create_train_test_set(X_pad, y)
 print(len(X_train), len(X_test))
 
-with open('D:/Python/Data/SENTIMENT140_set_keras.pickle', 'wb') as f:
-	pickle.dump([X_train, X_test, y_train, y_test], f)
+#with open('D:/Python/Data/SENTIMENT140_set_keras.pickle', 'wb') as f:
+#	pickle.dump([X_train, X_test, y_train, y_test], f)
 
